@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RestaurantOS — Table & Order Management</title>
+<link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <div class="logo"><span class="logo-dot"></span> RestaurantOS</div>
+  <nav class="nav">
+    <button class="nav-btn active" data-sec="dashboard">Dashboard</button>
+    <button class="nav-btn" data-sec="floor">Floor Map</button>
+    <button class="nav-btn" data-sec="manage">Tables</button>
+    <button class="nav-btn" data-sec="analytics">Analytics</button>
+  </nav>
+</div>
+
+<div class="main">
+
+  <!-- DASHBOARD -->
+  <div id="s-dashboard" class="section active">
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">Occupancy</div>
+        <div class="metric-val" id="m-occ">—</div>
+        <div class="metric-sub" id="m-occ-sub">loading…</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Live Revenue</div>
+        <div class="metric-val" id="m-rev">—</div>
+        <div class="metric-sub">Active unpaid bills</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Pending Cleanups</div>
+        <div class="metric-val" id="m-dirty">—</div>
+        <div class="metric-sub">Dirty tables</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">Top Zone</div>
+        <div class="metric-val" style="font-size:16px;padding-top:4px" id="m-floor">—</div>
+        <div class="metric-sub">Most active floor</div>
+      </div>
+    </div>
+    <div class="panel-header"><h2>Occupied Tables</h2></div>
+    <div class="tbl-wrap">
+      <div class="tbl-row tbl-head"><div>#</div><div>Zone</div><div>Cap.</div><div>Status</div><div style="text-align:right">Live Bill</div></div>
+      <div id="dash-occupied"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- FLOOR MAP -->
+  <div id="s-floor" class="section">
+    <div class="panel-header">
+      <h2>Live Floor Map</h2>
+      <div class="legend">
+        <span><span class="dot" style="background:var(--green)"></span> Available</span>
+        <span><span class="dot" style="background:var(--red)"></span> Occupied</span>
+        <span><span class="dot" style="background:var(--amber)"></span> Dirty</span>
+      </div>
+    </div>
+    <div id="floor-grid" class="floor-grid"><div class="empty">Loading…</div></div>
+  </div>
+
+  <!-- MANAGE TABLES -->
+  <div id="s-manage" class="section">
+    <div class="panel-header">
+      <h2>Table Management</h2>
+      <button class="btn btn-primary" onclick="openTableModal()">+ Add Table</button>
+    </div>
+    <div id="manage-alert"></div>
+    <div class="tbl-wrap">
+      <div class="tbl-row tbl-head"><div>#</div><div>Floor / Zone</div><div>Cap.</div><div>Status</div><div style="text-align:right">Actions</div></div>
+      <div id="tbl-list-body"><div class="empty">Loading…</div></div>
+    </div>
+  </div>
+
+  <!-- ANALYTICS -->
+  <div id="s-analytics" class="section">
+    <div class="panel-header"><h2>Peak Hour Analytics</h2></div>
+    <div id="analytics-content" class="analytics-grid"><div class="empty">Loading…</div></div>
+  </div>
+
+</div>
+
+<!-- ======= MODAL: Add/Edit Table ======= -->
+<div class="overlay" id="modal-table">
+  <div class="modal">
+    <h3 id="tbl-modal-title">Add Table</h3>
+    <div class="form-group"><label>Table Number</label><input id="f-tnum" type="number" min="1" placeholder="e.g. 7"></div>
+    <div class="form-group">
+      <label>Capacity</label>
+      <select id="f-tcap">
+        <option value="2">2-seater</option><option value="4" selected>4-seater</option>
+        <option value="6">6-seater</option><option value="8">8-seater</option><option value="10">10-seater</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Floor / Zone</label><input id="f-tfloor" placeholder="e.g. Ground Floor, Terrace"></div>
+    <div class="form-group">
+      <label>Status</label>
+      <select id="f-tstatus">
+        <option value="available">Available</option>
+        <option value="dirty">Dirty</option>
+      </select>
+    </div>
+    <div id="tbl-modal-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeOverlay('modal-table')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveTable()">Save Table</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: Order ======= -->
+<div class="overlay" id="modal-order">
+  <div class="modal modal-wide">
+    <div class="modal-head">
+      <h3 id="order-title">Order</h3>
+      <span id="settled-badge"></span>
+    </div>
+    <div id="order-alert"></div>
+    <div class="order-cols">
+
+      <div class="card-sm" id="order-add-form">
+        <div class="order-panel"><h4>Add Item</h4></div>
+        <div class="form-group"><label>Item Name</label><input id="i-name" placeholder="e.g. Butter Chicken"></div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="i-cat">
+            <option value="food">Food (5% GST)</option>
+            <option value="beverage">Beverage (18% GST)</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Price (₹)</label><input id="i-price" type="number" min="1" step="0.01" placeholder="e.g. 280"></div>
+        <div id="item-err" class="field-error" style="margin-bottom:8px"></div>
+        <button class="btn btn-primary" style="width:100%" onclick="addItem()">+ Add Item</button>
+      </div>
+
+      <div class="card-sm">
+        <div class="order-panel"><h4>Bill</h4></div>
+        <div id="order-items" class="order-items"></div>
+        <hr class="bill-divider">
+        <div id="bill-summary"></div>
+        <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap" id="order-actions"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: Transfer ======= -->
+<div class="overlay" id="modal-transfer">
+  <div class="modal">
+    <h3>Transfer Table</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Move the entire order to an available table.</p>
+    <div class="form-group"><label>Transfer to</label><select id="transfer-sel"></select></div>
+    <div id="transfer-err"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeOverlay('modal-transfer')">Cancel</button>
+      <button class="btn btn-primary" onclick="doTransfer()">Confirm Transfer</button>
+    </div>
+  </div>
+</div>
+
+<!-- ======= MODAL: Split Bill ======= -->
+<div class="overlay" id="modal-split">
+  <div class="modal">
+    <h3>Split Bill</h3>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px">Set how many people share each item.</p>
+    <div id="split-items"></div>
+    <div id="split-summary"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeOverlay('modal-split')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/js/app.js"></script>
+</body>
+</html>
